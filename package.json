@@ -40,7 +40,7 @@
 	"dependencies": {
 		"commander": "latest",
 		"type-component": "latest",
-		"equals": "latest"
+		"equals": "1.0.1"
 	},
 	
 	"bin": {
