@@ -277,7 +277,7 @@ types.number = function(a){
 types['function'] = function(a, b, memos){
 	return a.toString() === b.toString()
 		// Functions can act as objects
-	  && types.object(a, b, memos) 
+	  && types.object(a, b, memos)
 		&& compare(a.prototype, b.prototype)
 }
 
@@ -552,7 +552,7 @@ require.register("jsedn/lib/atoms.js", function(module, exports, require){
 
     __extends(Symbol, _super);
 
-    Symbol.prototype.validRegex = /[0-9A-Za-z.*+!\-_?$%&=:#/]+/;
+    Symbol.prototype.validRegex = /[0-9A-Za-z.*+!\-_?$%&=<>\/:#/]+/;
 
     Symbol.prototype.invalidFirstChars = [":", "#", "/"];
 
