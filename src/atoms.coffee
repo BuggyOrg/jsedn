@@ -10,6 +10,11 @@ class Prim
 			
 	value: -> @val
 	toString: -> JSON.stringify @val
+	setPos: (startLine, startCol, endLine, endCol) ->
+		@posLineStart = startLine
+		@posColStart = startCol
+		@posLineEnd = endLine || startLine
+		@posColEnd = endCol || startCol
 
 class BigInt extends Prim 
 	ednEncode: -> @val

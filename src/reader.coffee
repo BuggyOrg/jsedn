@@ -20,8 +20,13 @@ lex = (string) ->
 	lines = []
 	line = 1
 	token = ''
+	col = 1
+	
+	newToken = (name, line, col) ->
+		list.push({token: name, line: line, col: col})
+	
 	for c in string
-		if c in ["\n", "\r"] then line++
+		if c in ["\n", "\r"] then line++; col = 1
 
 		if not in_string? and c is ";" and not escaping?
 			in_comment = true
@@ -29,24 +34,25 @@ lex = (string) ->
 		if in_comment
 			if c is "\n"
 				in_comment = undefined
-				if token 
-					list.push token
-					lines.push line 
+				if token
+					newToken token, line, col
 					token = ''
+			col++
 			continue
 			
 		if c is '"' and not escaping?
 			if in_string?
-				list.push (new StringObj in_string)
-				lines.push line 
+				newToken (new StringObj in_string), line, col
 				in_string = undefined
 			else
 				in_string = ''
+			col++
 			continue
 
 		if in_string?
 			if c is escapeChar and not escaping?
 				escaping = true
+				col++
 				continue
 
 			if escaping? 
@@ -57,12 +63,10 @@ lex = (string) ->
 			in_string += c
 		else if c in specialChars and not escaping?
 			if token
-				list.push token
-				lines.push line 
+				newToken token, line, col
 				token = ''
 			if c in parens
-				list.push c
-				lines.push line 
+				newToken c, line, col
 		else
 			if escaping
 				escaping = undefined
@@ -70,14 +74,13 @@ lex = (string) ->
 				escaping = true
 			
 			if token is "#_"
-				list.push token
-				lines.push line
+				newToken token, line, col
 				token = ''
 			token += c
+		col++
 
 	if token
-		list.push(token)
-		lines.push line 
+		newToken token, line, col
 	{tokens: list, tokenLines: lines}
 
 #based roughly on the work of norvig from his lisp in python
@@ -85,33 +88,38 @@ read = (ast) ->
 	{tokens, tokenLines} = ast
 
 	read_ahead = (token, tokenIndex = 0, expectSet = false) ->
-		if token is undefined then return
+		if token.token is undefined then return
 
-		if (not (token instanceof StringObj)) and paren = parenTypes[token]
+		if (not (token.token instanceof StringObj)) and paren = parenTypes[token.token]
 			closeParen = paren.closing
 			L = []
+			startLine = token.line
+			startCol = token.col
+
 			while true
 				token = tokens.shift()
-
-				if token is undefined then throw "unexpected end of list at line #{tokenLines[tokenIndex]}"
+				if token.token is undefined then throw "unexpected end of list at line #{tokenLines[tokenIndex]}"
 
 				tokenIndex++
-				if token is paren.closing
-					return new typeClasses[if expectSet then "Set" else paren.class] L
+				if token.token is paren.closing
+					newObj = new typeClasses[if expectSet then "Set" else paren.class] L
+					newObj.setPos startLine, startCol, token.line, token.col
+					return newObj
 				else 
 					L.push read_ahead token, tokenIndex
 
-		else if token in ")]}"
-			throw "unexpected #{token} at line #{tokenLines[tokenIndex]}"
+		else if token.token in ")]}"
+			throw "unexpected #{token.token} at line #{tokenLines[tokenIndex]}"
 		else
-			handledToken = handleToken token
+			handledToken = handleToken token.token
 			if handledToken instanceof Tag
 				token = tokens.shift()
 				tokenIndex++
 
-				if token is undefined then throw "was expecting something to follow a tag at line #{tokenLines[tokenIndex]}"
+				if token.token is undefined then throw "was expecting something to follow a tag at line #{tokenLines[tokenIndex]}"
 
 				tagged = new typeClasses.Tagged handledToken, read_ahead token, tokenIndex, handledToken.dn() is ""
+				tagged.setPos token.line, token.col
 
 				if handledToken.dn() is ""
 					if tagged.obj() instanceof typeClasses.Set
@@ -127,15 +135,18 @@ read = (ast) ->
 				
 				return tagged
 			else
+				if typeof handledToken != "string"
+					handledToken.setPos token.line, token.col
 				return handledToken
 
 	token1 = tokens.shift()
-	if token1 is undefined
+	if token1.token is undefined
 		return undefined 
 	else
 		result = read_ahead token1
 		if result instanceof typeClasses.Discard 
 			return ""
+		#result.setPos token1.line, 0, 7, 7
 		return result
 		
 parse = (string) -> read lex string 

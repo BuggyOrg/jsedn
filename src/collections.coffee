@@ -80,9 +80,18 @@ class Set extends Iterable
 		new Set @each iter
 
 class Pair
-	constructor: (@key, @val) -> 
+	setPos: (startLine, startCol, endLine, endCol) ->
+		@posLineStart = startLine
+		@posColStart = startCol
+		@posLineEnd = endLine || startLine
+		@posColEnd = endCol || startCol
 
 class Map
+	setPos: (startLine, startCol, endLine, endCol) ->
+		@posLineStart = startLine
+		@posColStart = startCol
+		@posLineEnd = endLine || startLine
+		@posColEnd = endCol || startCol
 	hashId: -> 
 		@ednEncode()
 		
