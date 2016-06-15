@@ -135,7 +135,7 @@ read = (ast) ->
 				
 				return tagged
 			else
-				if typeof handledToken != "string"
+				if typeof handledToken != "string" and typeof handledToken != "number"
 					handledToken.setPos token.line, token.col
 				return handledToken
 
