@@ -22,8 +22,14 @@ lex = (string) ->
 	token = ''
 	col = 1
 	
+	@lastToken
 	newToken = (name, line, col) ->
-		list.push({token: name, line: line, col: col})
+		temp = {token: name, lineStart: line, colStart: col, lineEnd: line, colEnd: col}
+		if @lastToken
+			temp.lineStart = @lastToken.lineEnd
+			temp.colStart = @lastToken.colEnd
+		@lastToken = temp
+		list.push(temp)
 	
 	for c in string
 		if c in ["\n", "\r"] then line++; col = 1
@@ -93,39 +99,40 @@ read = (ast) ->
 		if (not (token.token instanceof StringObj)) and paren = parenTypes[token.token]
 			closeParen = paren.closing
 			L = []
-			startLine = token.line
-			startCol = token.col
+			startLine = token.lineStart
+			startCol = token.colStart
+			outerToken = token
 
 			while true
 				token = tokens.shift()
-				if token.token is undefined then throw "unexpected end of list at line #{tokenLines[tokenIndex]}"
+				if token.token is undefined then throw "unexpected end of list at line #{token.lineStart}:#{token.colStart}-#{token.lineEnd}:#{token.colEnd}"
 
 				tokenIndex++
 				if token.token is paren.closing
 					newObj = new typeClasses[if expectSet then "Set" else paren.class] L
-					newObj.setPos startLine, startCol, token.line, token.col
+					newObj.setPos startLine, startCol, token.lineEnd, token.lineEnd
 					return newObj
 				else 
 					L.push read_ahead token, tokenIndex
 
 		else if token.token in ")]}"
-			throw "unexpected #{token.token} at line #{tokenLines[tokenIndex]}"
+			throw "unexpected #{token.token} at line #{token.lineStart}:#{token.colStart}-#{token.lineEnd}:#{token.colEnd}"
 		else
 			handledToken = handleToken token.token
 			if handledToken instanceof Tag
 				token = tokens.shift()
 				tokenIndex++
 
-				if token.token is undefined then throw "was expecting something to follow a tag at line #{tokenLines[tokenIndex]}"
+				if token.token is undefined then throw "was expecting something to follow a tag at line #{token.lineStart}:#{token.colStart}-#{token.lineEnd}:#{token.colEnd}"
 
 				tagged = new typeClasses.Tagged handledToken, read_ahead token, tokenIndex, handledToken.dn() is ""
-				tagged.setPos token.line, token.col
+				tagged.setPos token.lineStart, token.colStart, token.lineEnd, token.colEnd
 
 				if handledToken.dn() is ""
 					if tagged.obj() instanceof typeClasses.Set
 						return tagged.obj()
 					else
-						throw "Exepected a set but did not get one at line #{tokenLines[tokenIndex]}"
+						throw "Exepected a set but did not get one at line #{token.lineStart}:#{token.colStart}-#{token.lineEnd}:#{token.colEnd}"
 					
 				if tagged.tag().dn() is "_"
 					return new typeClasses.Discard
@@ -136,7 +143,7 @@ read = (ast) ->
 				return tagged
 			else
 				if typeof handledToken != "string" and typeof handledToken != "number"
-					handledToken.setPos token.line, token.col
+					handledToken.setPos token.lineStart, token.colStart, token.lineEnd, token.colEnd
 				return handledToken
 
 	token1 = tokens.shift()

@@ -111,7 +111,8 @@ class Map
 		
 	constructor: (@val = []) ->
 		if @val.length and @val.length % 2 isnt 0 
-			throw "Map accepts an array with an even number of items. You provided #{@val.length} items"
+			throw "Map accepts an array with an even number of items. You provided #{@val.length} items at line 
+				   #{@val[0].posLineStart}:#{@val[0].posColStart}-#{@val[@val.length-1].posLineEnd}:#{@val[@val.length-1].posColEnd}"
  
 		@keys = []
 		@vals = []
