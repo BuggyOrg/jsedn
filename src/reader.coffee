@@ -196,13 +196,3 @@ module.exports =
 	atPath: require "./atPath"
 	unify: require("./unify")(parse)
 	compile: require "./compile"
-
-if typeof window is "undefined"
-	fs = require "fs"
-	module.exports.readFile = (file, cb) -> 
-		fs.readFile file, "utf-8", (err, data) -> 
-			if err then throw err
-			cb parse data
-
-	module.exports.readFileSync = (file) -> 
-		parse fs.readFileSync file, "utf-8"
