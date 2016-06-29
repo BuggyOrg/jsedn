@@ -22,13 +22,14 @@ lex = (string) ->
 	token = ''
 	col = 1
 	
-	@lastToken
+	lastToken = 0
+	
 	newToken = (name, line, col) ->
 		temp = {token: name, lineStart: line, colStart: col, lineEnd: line, colEnd: col}
-		if @lastToken
-			temp.lineStart = @lastToken.lineEnd
-			temp.colStart = @lastToken.colEnd
-		@lastToken = temp
+		if lastToken != 0
+			temp.lineStart = lastToken.lineEnd
+			temp.colStart = lastToken.colEnd
+		lastToken = temp
 		list.push(temp)
 	
 	for c in string
