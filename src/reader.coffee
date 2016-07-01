@@ -94,6 +94,8 @@ lex = (string) ->
 read = (ast) ->
 	{tokens, tokenLines} = ast
 
+	expectedParen = 0
+
 	read_ahead = (token, tokenIndex = 0, expectSet = false) ->
 		if token.token is undefined then return
 
@@ -107,7 +109,7 @@ read = (ast) ->
 			while true
 				token = tokens.shift()
 				if token.token is undefined then throw "unexpected end of list at line #{token.lineStart}:#{token.colStart}-#{token.lineEnd}:#{token.colEnd}"
-
+				expectedParen = closeParen
 				tokenIndex++
 				if token.token is paren.closing
 					newObj = new typeClasses[if expectSet then "Set" else paren.class] L
@@ -117,7 +119,7 @@ read = (ast) ->
 					L.push read_ahead token, tokenIndex
 
 		else if token.token in ")]}"
-			throw "unexpected #{token.token} at line #{token.lineStart}:#{token.colStart}-#{token.lineEnd}:#{token.colEnd}"
+			throw "expected #{expectedParen} but got unexpected #{token.token} at line #{token.lineStart}:#{token.colStart}-#{token.lineEnd}:#{token.colEnd}"
 		else
 			handledToken = handleToken token.token
 			if handledToken instanceof Tag
