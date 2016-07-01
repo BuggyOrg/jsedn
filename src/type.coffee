@@ -1,4 +1,1 @@
-module.exports = if typeof window is "undefined"
-		require "type-component"
-	else
-		require "type"
+module.exports = require "type-component"
