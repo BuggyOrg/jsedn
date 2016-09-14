@@ -112,7 +112,7 @@ read = (ast) ->
 				expectedParen = closeParen
 				tokenIndex++
 				if token.token is paren.closing
-					newObj = new typeClasses[if expectSet then "Set" else paren.class] L
+					newObj = new typeClasses[if expectSet and token.token is '}' then "Set" else paren.class] L
 					newObj.setPos startLine, startCol, token.lineEnd, token.lineEnd
 					return newObj
 				else 
@@ -130,12 +130,6 @@ read = (ast) ->
 
 				tagged = new typeClasses.Tagged handledToken, read_ahead token, tokenIndex, handledToken.dn() is ""
 				tagged.setPos token.lineStart, token.colStart, token.lineEnd, token.colEnd
-
-				if handledToken.dn() is ""
-					if tagged.obj() instanceof typeClasses.Set
-						return tagged.obj()
-					else
-						throw "Exepected a set but did not get one at line #{token.lineStart}:#{token.colStart}-#{token.lineEnd}:#{token.colEnd}"
 					
 				if tagged.tag().dn() is "_"
 					return new typeClasses.Discard
